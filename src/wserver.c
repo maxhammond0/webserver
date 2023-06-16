@@ -2,6 +2,14 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+#include "request.h"
+
+#define BUFLEN (8192)
 
 char default_root[] = "public_html";
 
@@ -17,8 +25,7 @@ int main(int argc, char **argv) {
     int threads = 1;
     int buffers = 1;
 
-    // 0 = FIFO, 1 = SFF
-    int schedalg = 0;
+    char *schedalg = "FIFO";
 
     while ((c = getopt(argc, argv, "d:p:t:b:s:")) != -1) {
         switch (c) {
@@ -40,7 +47,7 @@ int main(int argc, char **argv) {
                     exit(1);
                 }
                 if (strcmp(optarg, "SFF") == 0) {
-                    schedalg = 1;
+                    schedalg = "SFF";
                 }
                 break;
             default:
@@ -52,12 +59,68 @@ int main(int argc, char **argv) {
     printf("port: %d\n", port);
     printf("threads: %d\n", threads);
     printf("buffers: %d\n", buffers);
-    printf("scheduling algorithm: %d\n", schedalg);
+    printf("scheduling algorithm: %s\n", schedalg);
 
     if (chdir(root_dir) == -1) {
         fprintf(stderr, "Couldn't find root directory");
         exit(1);
     }
+
+    // struct sockaddr_in sa;
+    struct sockaddr_storage their_addr;
+    struct addrinfo hints, *res;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    char port_str[10];
+    sprintf(port_str, "%d", port);
+    if (getaddrinfo(NULL, port_str, &hints, &res) != 0) {
+        fprintf(stderr, "Error getting address info\n");
+        exit(1);
+    }
+
+    int sockfd;
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        fprintf(stderr, "Error creating socket\n");
+        exit(1);
+    }
+
+    if (bind(sockfd, res->ai_addr, res->ai_addrlen) == -1) {
+        fprintf(stderr, "Error binding to socket\n");
+        exit(1);
+    }
+
+    if (listen(sockfd, buffers) == -1) { 
+        fprintf(stderr, "Error listen to socket\n");
+        exit(1);
+    }
+
+    socklen_t addr_size = sizeof(their_addr);
+    int readfd;
+    if ((readfd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size)) == -1) {
+        fprintf(stderr, "Error accepting socket connection\n");
+        exit(1);
+    }
+
+    char buf[BUFLEN];
+    int read = recv(readfd, buf, BUFLEN, 0);
+    if (read == -1) {
+        fprintf(stderr, "Error receiving data\n");
+        exit(1);
+    }
+
+    parse_request(buf);
+
+    close(readfd);
+    close(sockfd);
+
+    // printf("Server started\n");
+    // while (1) {
+    //
+    // }
 
     return 0;
 }
