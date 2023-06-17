@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#include "request.h"
+#include "response.h"
 
 #define BUFLEN (8192)
 
@@ -88,6 +88,13 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    int yes=1;
+
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
+        perror("setsockopt");
+        exit(1);
+    }
+
     if (bind(sockfd, res->ai_addr, res->ai_addrlen) == -1) {
         fprintf(stderr, "Error binding to socket\n");
         exit(1);
@@ -98,29 +105,43 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    socklen_t addr_size = sizeof(their_addr);
-    int readfd;
-    if ((readfd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size)) == -1) {
-        fprintf(stderr, "Error accepting socket connection\n");
-        exit(1);
-    }
-
     char buf[BUFLEN];
-    int read = recv(readfd, buf, BUFLEN, 0);
-    if (read == -1) {
-        fprintf(stderr, "Error receiving data\n");
-        exit(1);
+
+
+    while (1) {
+
+        socklen_t addr_size = sizeof(their_addr);
+        int readfd;
+        if ((readfd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size)) == -1) {
+            fprintf(stderr, "Error accepting socket connection\n");
+            exit(1);
+        }
+
+        int read = recv(readfd, buf, BUFLEN, 0);
+        if (read == -1) {
+            fprintf(stderr, "Error receiving data\n");
+            exit(1);
+        }
+
+        printf("%s", buf);
+
+        char *response = generate_response(buf);
+        if (response == NULL) {
+            fprintf(stderr, "Invalid response");
+        }
+        
+        int bytes_sent = send(readfd, response, strlen(response), 0);
+        if (bytes_sent < 0) {
+            fprintf(stderr, "Error sending data\n");
+        }
+
+        free(response);
+
+        close(readfd);
     }
 
-    parse_request(buf);
-
-    close(readfd);
+    // Unreachable code
     close(sockfd);
-
-    // printf("Server started\n");
-    // while (1) {
-    //
-    // }
 
     return 0;
 }
