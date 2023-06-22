@@ -77,7 +77,8 @@ int main(int argc, char **argv) {
 
     char port_str[10];
     sprintf(port_str, "%d", port);
-    if (getaddrinfo(NULL, port_str, &hints, &res) != 0) {
+    if (getaddrinfo(NULL, port_str, &hints, &res) != 0)
+    {
         fprintf(stderr, "Error getting address info\n");
         exit(1);
     }

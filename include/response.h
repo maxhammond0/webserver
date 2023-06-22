@@ -1,3 +1,6 @@
+#ifndef _RESPONSE_H_
+#define _RESPONSE_H_
+
 /*
  * A collection of functions for building up a response to a html request
  */
@@ -17,3 +20,5 @@
  * returns: A pointer to the string of the desired response
  */
 char *generate_response(char *request);
+
+#endif
