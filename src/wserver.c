@@ -13,8 +13,10 @@
 
 char default_root[] = "public_html";
 
-int main(int argc, char **argv) {
-    // if (argc != 4) {
+int main(int argc, char **argv)
+{
+    // if (argc != 4)
+    // {
     //     printf("Incorrect usage\n");
     //     printf("Should be ./wserver <ipv4> <port> <root dir>\n");
     //     return 1;
@@ -27,8 +29,10 @@ int main(int argc, char **argv) {
 
     char *schedalg = "FIFO";
 
-    while ((c = getopt(argc, argv, "d:p:t:b:s:")) != -1) {
-        switch (c) {
+    while ((c = getopt(argc, argv, "d:p:t:b:s:")) != -1)
+    {
+        switch (c)
+        {
             case 'd':
                 root_dir = optarg;
                 break;
@@ -42,11 +46,13 @@ int main(int argc, char **argv) {
                 buffers = atoi(optarg);
                 break;
             case 's':
-                if (!strcmp(optarg, "FIFO") && !strcmp(optarg, "SFF")) {
+                if (!strcmp(optarg, "FIFO") && !strcmp(optarg, "SFF"))
+                {
                     fprintf(stderr, "Unrecognized scheduling algorithm");
                     exit(1);
                 }
-                if (strcmp(optarg, "SFF") == 0) {
+                if (strcmp(optarg, "SFF") == 0)
+                {
                     schedalg = "SFF";
                 }
                 break;
@@ -61,7 +67,8 @@ int main(int argc, char **argv) {
     printf("buffers: %d\n", buffers);
     printf("scheduling algorithm: %s\n", schedalg);
 
-    if (chdir(root_dir) == -1) {
+    if (chdir(root_dir) == -1)
+    {
         fprintf(stderr, "Couldn't find root directory");
         exit(1);
     }
@@ -78,30 +85,35 @@ int main(int argc, char **argv) {
     char port_str[10];
     sprintf(port_str, "%d", port);
     if (getaddrinfo(NULL, port_str, &hints, &res) != 0)
+
     {
         fprintf(stderr, "Error getting address info\n");
         exit(1);
     }
 
     int sockfd;
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    {
         fprintf(stderr, "Error creating socket\n");
         exit(1);
     }
 
     int yes=1;
 
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
+    {
         perror("setsockopt");
         exit(1);
     }
 
-    if (bind(sockfd, res->ai_addr, res->ai_addrlen) == -1) {
+    if (bind(sockfd, res->ai_addr, res->ai_addrlen) == -1)
+    {
         fprintf(stderr, "Error binding to socket\n");
         exit(1);
     }
 
-    if (listen(sockfd, buffers) == -1) { 
+    if (listen(sockfd, buffers) == -1)
+    {
         fprintf(stderr, "Error listen to socket\n");
         exit(1);
     }
@@ -109,17 +121,20 @@ int main(int argc, char **argv) {
     char buf[BUFLEN];
 
 
-    while (1) {
+    while (1)
+    {
 
         socklen_t addr_size = sizeof(their_addr);
         int readfd;
-        if ((readfd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size)) == -1) {
+        if ((readfd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size)) == -1)
+        {
             fprintf(stderr, "Error accepting socket connection\n");
             exit(1);
         }
 
         int read = recv(readfd, buf, BUFLEN, 0);
-        if (read == -1) {
+        if (read == -1)
+        {
             fprintf(stderr, "Error receiving data\n");
             exit(1);
         }
@@ -127,12 +142,14 @@ int main(int argc, char **argv) {
         printf("%s", buf);
 
         char *response = generate_response(buf);
-        if (response == NULL) {
+        if (response == NULL)
+        {
             fprintf(stderr, "Invalid response");
         }
-        
+
         int bytes_sent = send(readfd, response, strlen(response), 0);
-        if (bytes_sent < 0) {
+        if (bytes_sent < 0)
+        {
             fprintf(stderr, "Error sending data\n");
         }
 

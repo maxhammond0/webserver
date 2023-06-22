@@ -45,7 +45,8 @@ printf("%d %s\n", q->bar, q->baz); // 12 Hello
 #define DEFAULT_GROW_FACTOR 2
 
 // Hash table entry
-struct htent {
+struct htent
+{
     void *key;
     int key_size;
     int hashed_key;
@@ -53,7 +54,8 @@ struct htent {
 };
 
 // Used to cleanup the linked lists
-struct foreach_callback_payload {
+struct foreach_callback_payload
+{
 	void *arg;
 	void (*f)(void *, void *);
 };
@@ -76,7 +78,8 @@ int default_hashf(void *data, int data_size, int bucket_count)
     int h = 0;
     unsigned char *p = data;
 
-    for (int i = 0; i < data_size; i++) {
+    for (int i = 0; i < data_size; i++)
+    {
         h = (R * h + p[i]) % bucket_count;
     }
 
@@ -85,11 +88,13 @@ int default_hashf(void *data, int data_size, int bucket_count)
 
 struct hashtable *hashtable_create(int size, int (*hashf)(void *, int, int))
 {
-    if (size < 1) {
+    if (size < 1)
+    {
         size = DEFAULT_SIZE;
     }
 
-    if (hashf == NULL) {
+    if (hashf == NULL)
+    {
         hashf = default_hashf;
     }
 
@@ -103,7 +108,8 @@ struct hashtable *hashtable_create(int size, int (*hashf)(void *, int, int))
     ht->bucket = malloc(size * sizeof(struct llist *));
     ht->hashf = hashf;
 
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++)
+    {
         ht->bucket[i] = llist_create();
     }
 
@@ -122,7 +128,8 @@ void htent_free(void *htent, void *arg)
 
 void hashtable_destroy(struct hashtable *ht)
 {
-    for (int i = 0; i < ht->size; i++) {
+    for (int i = 0; i < ht->size; i++)
+    {
         struct llist *llist = ht->bucket[i];
 
 		llist_foreach(llist, htent_free, NULL);
@@ -150,7 +157,8 @@ void *hashtable_put_bin(struct hashtable *ht, void *key, int key_size, void *dat
     ent->hashed_key = index;
     ent->data = data;
 
-    if (llist_append(llist, ent) == NULL) {
+    if (llist_append(llist, ent) == NULL)
+    {
         free(ent->key);
         free(ent);
         return NULL;
@@ -170,7 +178,8 @@ int htcmp(void *a, void *b)
 
     int size_diff = entB->key_size - entA->key_size;
 
-    if (size_diff) {
+    if (size_diff)
+    {
         return size_diff;
     }
 
@@ -216,7 +225,8 @@ void *hashtable_delete_bin(struct hashtable *ht, void *key, int key_size)
 
     struct htent *ent = llist_delete(llist, &cmpent, htcmp);
 
-	if (ent == NULL) {
+	if (ent == NULL)
+    {
 		return NULL;
 	}
 
@@ -247,7 +257,8 @@ void hashtable_foreach(struct hashtable *ht, void (*f)(void *, void *), void *ar
 	payload.f = f;
 	payload.arg = arg;
 
-	for (int i = 0; i < ht->size; i++) {
+	for (int i = 0; i < ht->size; i++)
+    {
 		struct llist *llist = ht->bucket[i];
 
 		llist_foreach(llist, foreach_callback, &payload);

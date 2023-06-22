@@ -1,35 +1,41 @@
 #include "response.h"
 
-char **parse_request(char *request) {
+char **parse_request(char *request)
+{
     char **result = malloc(sizeof(char *) * 2);
-    if (result == NULL) {
+    if (result == NULL)
+    {
         return NULL; // Not enough memory
     }
 
     char *method = strtok(request, " ");
     char *filepath = strtok(NULL, " ");
 
-    if (method == NULL || filepath == NULL) {
+    if (method == NULL || filepath == NULL)
+    {
         free(result);
         return NULL; // Invalid request
     }
 
     // If the requested filepath is "/", change it to "/index.html"
-    if (strcmp(filepath, "/") == 0) {
+    if (strcmp(filepath, "/") == 0)
+    {
         filepath = "/index.html";
     }
 
     // Allocate memory and copy the method and filepath into the result array
     result[0] = strdup(method);
 
-    if (result[0] == NULL) {
+    if (result[0] == NULL)
+    {
         free(result);
         return NULL; // Not enough memory
     }
 
     // Ignore the leading slash in the filepath before duplicating
     result[1] = strdup(filepath + 1);
-    if (result[1] == NULL) {
+    if (result[1] == NULL)
+    {
         free(result[0]);
         free(result);
         return NULL; // Not enough memory
@@ -38,11 +44,14 @@ char **parse_request(char *request) {
     return result;
 }
 
-char *get_html_content(const char *filename) {
+char *get_html_content(const char *filename)
+{
     FILE *file = fopen(filename, "r");
-    if (file == NULL) {
+    if (file == NULL)
+    {
         file = fopen("../404.html", "r");
-        if (!file) {
+        if (!file)
+        {
             fprintf(stderr, "File not found");
             return NULL;
         }
@@ -69,7 +78,8 @@ char *get_html_content(const char *filename) {
     return content;
 }
 
-char *get(char *filename) {
+char *get(char *filename)
+{
 
     char *html_string = get_html_content(filename);
     char *response = malloc(BUFLEN*sizeof(char));
@@ -77,7 +87,7 @@ char *get(char *filename) {
     char date[30];
     time_t rawtime;
     struct tm *timeinfo;
-    
+
     time(&rawtime);
     timeinfo = localtime(&rawtime);
 
@@ -96,14 +106,18 @@ char *get(char *filename) {
     return response;
 }
 
-char *generate_response(char *request) {
+char *generate_response(char *request)
+{
 
     char **args = parse_request(request);
     char *response;
 
-    if (!strcmp(args[0], "GET")) {
+    if (!strcmp(args[0], "GET"))
+    {
         response = get(args[1]);
-    } else {
+    }
+    else
+    {
         response = NULL;
     }
 

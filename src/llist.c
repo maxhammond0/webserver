@@ -1,13 +1,16 @@
 #include "llist.h"
 
-struct node {
+struct node
+{
     void *data;
     struct node *next;
 };
 
-struct llist *llist_create(void) {
+struct llist *llist_create(void)
+{
     struct llist *llist = malloc(sizeof(struct llist));
-    if (llist == NULL) {
+    if (llist == NULL)
+    {
         return NULL;
     }
 
@@ -16,11 +19,13 @@ struct llist *llist_create(void) {
     return llist;
 }
 
-void llist_destroy(struct llist *llist) {
+void llist_destroy(struct llist *llist)
+{
     struct node *head = llist->head;
     struct node *next = NULL;
 
-    while (head != NULL) {
+    while (head != NULL)
+    {
         next = head->next;
         free(head);
         head = next;
@@ -29,9 +34,11 @@ void llist_destroy(struct llist *llist) {
     free(llist);
 }
 
-void *llist_insert(struct llist *llist, void *data) {
+void *llist_insert(struct llist *llist, void *data)
+{
     struct node *head = malloc(sizeof(struct node));
-    if (head == NULL) {
+    if (head == NULL)
+    {
         return NULL;
     }
 
@@ -44,9 +51,11 @@ void *llist_insert(struct llist *llist, void *data) {
     return data;
 }
 
-void *llist_append(struct llist *llist, void *data) {
+void *llist_append(struct llist *llist, void *data)
+{
     struct node *node = malloc(sizeof(struct node));
-    if (node == NULL) {
+    if (node == NULL)
+    {
         return NULL;
     }
 
@@ -55,7 +64,8 @@ void *llist_append(struct llist *llist, void *data) {
 
     struct node *head = llist->head;
 
-    while (head->next != NULL) {
+    while (head->next != NULL)
+    {
         head = head->next;
     }
 
@@ -64,18 +74,22 @@ void *llist_append(struct llist *llist, void *data) {
     return data;
 }
 
-void *llist_head(struct llist *llist) {
+void *llist_head(struct llist *llist)
+{
     return llist->head == NULL ? NULL : llist->head->data;
 }
 
-void *llist_tail(struct llist *llist) {
-    if (llist->head == NULL) {
+void *llist_tail(struct llist *llist)
+{
+    if (llist->head == NULL)
+    {
         return NULL;
     }
 
     struct node *cursor = llist->head;
 
-    while (cursor->next != NULL) {
+    while (cursor->next != NULL)
+    {
         cursor = cursor->next;
     }
 
@@ -83,12 +97,15 @@ void *llist_tail(struct llist *llist) {
 }
 
 void *llist_find(struct llist *llist, void *data,
-        int (*cmpfn) (void *, void *)) {
+        int (*cmpfn) (void *, void *))
+{
 
     struct node *cursor = llist->head;
 
-    while (cursor->next != NULL) {
-        if (cmpfn(cursor->data, data) == 0) {
+    while (cursor->next != NULL)
+    {
+        if (cmpfn(cursor->data, data) == 0)
+        {
             return data;
         }
 
@@ -99,19 +116,25 @@ void *llist_find(struct llist *llist, void *data,
 }
 
 void *llist_delete(struct llist *llist, void *data,
-        int (*cmpfn) (void *, void *)) {
+        int (*cmpfn) (void *, void *))
+{
 
     struct node *cursor = llist->head;
     struct node *prev = NULL;
 
-    while (cursor != NULL) {
-        if (cmpfn(cursor->data, data) == 0) {
+    while (cursor != NULL)
+    {
+        if (cmpfn(cursor->data, data) == 0)
+        {
             void *data = data;
 
-            if (prev == NULL) {
+            if (prev == NULL)
+            {
                 llist->head = cursor->next;
                 free(cursor);
-            } else {
+            }
+            else
+            {
                 prev->next = cursor->next;
                 free(cursor);
             }
@@ -127,23 +150,28 @@ void *llist_delete(struct llist *llist, void *data,
     return NULL;
 }
 
-int llist_count(struct llist *llist) {
+int llist_count(struct llist *llist)
+{
     return llist->count;
 }
 
 void llist_foreach(struct llist *llist, void (*fn) (void *, void *),
-        void *arg) {
+        void *arg)
+{
 
     struct node *cursor = llist->head;
 
-    while (cursor != NULL) {
+    while (cursor != NULL)
+    {
         fn(cursor->data, arg);
         cursor = cursor->next;
     }
 }
 
-void **llist_array_get(struct llist *llist) {
-    if (llist->head == NULL) {
+void **llist_array_get(struct llist *llist)
+{
+    if (llist->head == NULL)
+    {
         return NULL;
     }
 
@@ -152,7 +180,8 @@ void **llist_array_get(struct llist *llist) {
     struct node *cursor = llist->head;
 
     int i = 0;
-    while (cursor != NULL) {
+    while (cursor != NULL)
+    {
         array[i] = cursor->data;
         cursor = cursor->next;
         i++;
@@ -163,6 +192,7 @@ void **llist_array_get(struct llist *llist) {
     return array;
 }
 
-void llist_array_free(void **array) {
+void llist_array_free(void **array)
+{
     free(array);
 }

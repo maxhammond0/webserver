@@ -21,4 +21,9 @@
  */
 char *generate_response(char *request);
 
+/*
+ * Parses the http request
+ */
+char **parse_request(char *request);
+
 #endif
