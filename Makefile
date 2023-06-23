@@ -5,7 +5,7 @@ TARGET := wserver
 SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
-CFLAGS := -c -Wall -Wvla -Werror -Os -g
+CFLAGS := -c -Wall -Wvla -Wpedantic -Werror -Os -g
 ASAN_FLAGS := -fsanitize=address
 LIB := -L lib
 INC := -I include

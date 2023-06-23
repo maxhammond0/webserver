@@ -88,8 +88,8 @@ struct cache *cache_create(int max_size, int hashsize)
     cache->head = NULL;
     cache->tail = NULL;
     cache->index = table;
-    cache->max_size = hashsize;
-    cache->cur_size = 0;
+    cache->max_size = max_size;
+    cache->cur_size = hashsize;
 
     return cache;
 }

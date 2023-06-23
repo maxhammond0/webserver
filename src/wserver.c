@@ -8,19 +8,60 @@
 #include <netdb.h>
 
 #include "response.h"
+#include "request.h"
 
 #define BUFLEN (8192)
 
 char default_root[] = "public_html";
 
+int open_listen_fd(int port, int buffers) {
+    struct addrinfo hints, *res;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    char port_str[10];
+    sprintf(port_str, "%d", port);
+    if (getaddrinfo(NULL, port_str, &hints, &res) != 0)
+
+    {
+        fprintf(stderr, "Error getting address info\n");
+        return -1;
+    }
+
+    int listenfd;
+    if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+        fprintf(stderr, "Error creating socket\n");
+        return -1;
+    }
+
+    int yes=1;
+    if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
+    {
+        perror("setsockopt");
+        return -1;
+    }
+
+    if (bind(listenfd, res->ai_addr, res->ai_addrlen) == -1)
+    {
+        fprintf(stderr, "Error binding to socket\n");
+        return -1;
+    }
+
+    if (listen(listenfd, buffers) == -1)
+    {
+        fprintf(stderr, "Error listen to socket\n");
+        return -1;
+    }
+
+    return listenfd;
+}
+
 int main(int argc, char **argv)
 {
-    // if (argc != 4)
-    // {
-    //     printf("Incorrect usage\n");
-    //     printf("Should be ./wserver <ipv4> <port> <root dir>\n");
-    //     return 1;
-    // }
     int c;
     char *root_dir = default_root;
     int port = 10000;
@@ -73,93 +114,29 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    // struct sockaddr_in sa;
-    struct sockaddr_storage their_addr;
-    struct addrinfo hints, *res;
+    // char buf[BUFLEN];
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-
-    char port_str[10];
-    sprintf(port_str, "%d", port);
-    if (getaddrinfo(NULL, port_str, &hints, &res) != 0)
-
-    {
-        fprintf(stderr, "Error getting address info\n");
+    int listenfd = open_listen_fd(port, buffers);
+    if (listenfd == -1) {
+        fprintf(stderr, "Couldn't open file descriptor");
         exit(1);
     }
 
-    int sockfd;
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-    {
-        fprintf(stderr, "Error creating socket\n");
-        exit(1);
-    }
-
-    int yes=1;
-
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
-    {
-        perror("setsockopt");
-        exit(1);
-    }
-
-    if (bind(sockfd, res->ai_addr, res->ai_addrlen) == -1)
-    {
-        fprintf(stderr, "Error binding to socket\n");
-        exit(1);
-    }
-
-    if (listen(sockfd, buffers) == -1)
-    {
-        fprintf(stderr, "Error listen to socket\n");
-        exit(1);
-    }
-
-    char buf[BUFLEN];
-
+    struct sockaddr_storage client_addr;
+    socklen_t sin_size;
 
     while (1)
     {
+        int readfd = accept(listenfd, (struct sockaddr*)&client_addr,
+                &sin_size);
 
-        socklen_t addr_size = sizeof(their_addr);
-        int readfd;
-        if ((readfd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size)) == -1)
-        {
-            fprintf(stderr, "Error accepting socket connection\n");
-            exit(1);
-        }
-
-        int read = recv(readfd, buf, BUFLEN, 0);
-        if (read == -1)
-        {
-            fprintf(stderr, "Error receiving data\n");
-            exit(1);
-        }
-
-        printf("%s", buf);
-
-        char *response = generate_response(buf);
-        if (response == NULL)
-        {
-            fprintf(stderr, "Invalid response");
-        }
-
-        int bytes_sent = send(readfd, response, strlen(response), 0);
-        if (bytes_sent < 0)
-        {
-            fprintf(stderr, "Error sending data\n");
-        }
-
-        free(response);
+        handle_request(readfd); // handle rquest and send response
 
         close(readfd);
     }
 
     // Unreachable code
-    close(sockfd);
+    close(listenfd);
 
     return 0;
 }
