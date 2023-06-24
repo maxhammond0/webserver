@@ -9,21 +9,18 @@
 #include <time.h>
 #include <stdlib.h>
 
-#define BUFLEN (8192)
+#include "cache.h"
 
-/*
- * Takes in a HTTP request and fills in buf with the desired response
- * ------------------------------------------------------------------
- *
- * request: pointer to a string of the HTTP request
- *
- * returns: A pointer to the string of the desired response
- */
-char *generate_response(char *request);
+#define BUFLEN (8192)
 
 /*
  * Parses the http request
  */
 char **parse_request(char *request);
+
+/*
+ * Handles a get request and returns the correct HTML response as a char *
+ */
+char *handle_get_request(char *filename, struct cache *cache);
 
 #endif

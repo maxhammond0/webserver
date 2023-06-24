@@ -1,4 +1,10 @@
+#include "cache.h"
+#include <string.h>
+#include <ctype.h>
+
 #include "response.h"
+
+#define DEFAULT_MIME_TYPE "text/html"
 
 char **parse_request(char *request)
 {
@@ -78,10 +84,60 @@ char *get_html_content(const char *filename)
     return content;
 }
 
-char *get(char *filename)
+char *strlower(char *s)
+{
+    for (char *p = s; *p != '\0'; p++) {
+        *p = tolower(*p);
+    }
+
+    return s;
+}
+
+char *mime_type_get(char *filename)
+{
+    char *ext = strrchr(filename, '.');
+
+    if (ext == NULL) {
+        return DEFAULT_MIME_TYPE;
+    }
+
+    ext++;
+
+    strlower(ext);
+
+    if (strcmp(ext, "html") == 0 || strcmp(ext, "htm") == 0) { return "text/html"; }
+    if (strcmp(ext, "jpeg") == 0 || strcmp(ext, "jpg") == 0) { return "image/jpg"; }
+    if (strcmp(ext, "css") == 0) { return "text/css"; }
+    if (strcmp(ext, "js") == 0) { return "application/javascript"; }
+    if (strcmp(ext, "json") == 0) { return "application/json"; }
+    if (strcmp(ext, "txt") == 0) { return "text/plain"; }
+    if (strcmp(ext, "gif") == 0) { return "image/gif"; }
+    if (strcmp(ext, "png") == 0) { return "image/png"; }
+
+    return DEFAULT_MIME_TYPE;
+}
+
+char *handle_get_request(char *path, struct cache *cache)
 {
 
-    char *html_string = get_html_content(filename);
+    // struct cache_entry *alloc_entry(char *path, char *content_type, void *content, int content_length)
+    // path, content_type, content, content_length
+    struct cache_entry *entry;
+    char *content;
+    char *content_type;
+    long content_length;
+    if ((entry = cache_get(cache, path)) == NULL) {
+        content = get_html_content(path);
+        content_type = mime_type_get(path);
+        content_length = strlen(content);
+
+        cache_put(cache, path, content, content_type, content_length);
+    } else {
+        content = entry->content;
+        content_type = entry->content_type;
+        content_length = entry->content_length;
+    }
+
     char *response = malloc(BUFLEN*sizeof(char));
 
     char date[30];
@@ -98,32 +154,12 @@ char *get(char *filename)
             "Date: %s\r\n"
             "Connection: close\r\n"
             "Content-Length: %ld\r\n"
-            "Content-Type: text/html\r\n"
+            "Content-Type: %s/html\r\n"
             "\r\n"
             "%s\r\n",
-            date, strlen(html_string), html_string);
+            date, content_length, content_type, content);
 
-    return response;
-}
-
-char *generate_response(char *request)
-{
-
-    char **args = parse_request(request);
-    char *response;
-
-    if (!strcmp(args[0], "GET"))
-    {
-        response = get(args[1]);
-    }
-    else
-    {
-        response = NULL;
-    }
-
-    free(args[0]);
-    free(args[1]);
-    free(args);
-
+    free(content);
+    free(content_type);
     return response;
 }

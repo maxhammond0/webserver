@@ -1,20 +1,22 @@
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "response.h"
 #include "request.h"
+#include "cache.h"
 
 #define BUFLEN (8192)
 
 char default_root[] = "public_html";
 
-int open_listen_fd(int port, int buffers) {
+int open_listen_fd(int port, int buffers)
+{
     struct addrinfo hints, *res;
 
     memset(&hints, 0, sizeof(hints));
@@ -67,8 +69,8 @@ int main(int argc, char **argv)
     int port = 10000;
     int threads = 1;
     int buffers = 1;
-
     char *schedalg = "FIFO";
+
 
     while ((c = getopt(argc, argv, "d:p:t:b:s:")) != -1)
     {
@@ -114,7 +116,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    // char buf[BUFLEN];
+    struct cache *cache = cache_create(10, 0);
 
     int listenfd = open_listen_fd(port, buffers);
     if (listenfd == -1) {
@@ -130,12 +132,13 @@ int main(int argc, char **argv)
         int readfd = accept(listenfd, (struct sockaddr*)&client_addr,
                 &sin_size);
 
-        handle_request(readfd); // handle rquest and send response
+        handle_request(readfd, cache); // handle rquest and send response
 
         close(readfd);
     }
 
-    // Unreachable code
+    printf("Shutting down server\n");
+
     close(listenfd);
 
     return 0;

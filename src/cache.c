@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "hashtable.h"
+
 #include "cache.h"
 
 struct cache_entry *alloc_entry(char *path, char *content_type, void *content, int content_length)
