@@ -127,12 +127,14 @@ char *handle_get_request(char *path, struct cache *cache)
     char *content_type;
     long content_length;
     if ((entry = cache_get(cache, path)) == NULL) {
+        printf("cache entry not found\n");
         content = get_html_content(path);
         content_type = mime_type_get(path);
         content_length = strlen(content);
 
-        cache_put(cache, path, content, content_type, content_length);
+        cache_put(cache, path, content_type, content, content_length);
     } else {
+        printf("cache entry found\n");
         content = entry->content;
         content_type = entry->content_type;
         content_length = entry->content_length;
@@ -154,12 +156,14 @@ char *handle_get_request(char *path, struct cache *cache)
             "Date: %s\r\n"
             "Connection: close\r\n"
             "Content-Length: %ld\r\n"
-            "Content-Type: %s/html\r\n"
+            "Content-Type: %s\r\n"
             "\r\n"
             "%s\r\n",
             date, content_length, content_type, content);
 
-    free(content);
-    free(content_type);
+    printf("response: %s", response);
+
+    // free(content);
+    // free(content_type);
     return response;
 }

@@ -1,198 +1,243 @@
+#include <stdlib.h>
 #include "llist.h"
 
-struct node
-{
-    void *data;
-    struct node *next;
+struct llist_node {
+	void *data;
+	struct llist_node *next;
 };
 
+/**
+ * Allocate a new linked list
+ */
 struct llist *llist_create(void)
 {
-    struct llist *llist = malloc(sizeof(struct llist));
-    if (llist == NULL)
-    {
-        return NULL;
-    }
-
-    llist->head = NULL;
-
-    return llist;
+	return calloc(1, sizeof(struct llist));
 }
 
+/**
+ * Destroy a linked list
+ *
+ * If destfn is not NULL, it is called with the node data before the
+ * node is deallocated.
+ *
+ * NOTE: does *not* deallocate the data in each node!!
+ */
 void llist_destroy(struct llist *llist)
 {
-    struct node *head = llist->head;
-    struct node *next = NULL;
+	struct llist_node *n = llist->head, *next;
 
-    while (head != NULL)
-    {
-        next = head->next;
-        free(head);
-        head = next;
-    }
+	while (n != NULL) {
+		next = n->next;
+		free(n);
 
-    free(llist);
+		n = next;
+	}
+
+	free(llist);
 }
 
+/**
+ * Insert at the head of a linked list
+ */
 void *llist_insert(struct llist *llist, void *data)
 {
-    struct node *head = malloc(sizeof(struct node));
-    if (head == NULL)
-    {
-        return NULL;
-    }
+	struct llist_node *n = calloc(1, sizeof *n);
 
-    head->data = data;
-    head->next = llist->head;
+	if (n == NULL) {
+		return NULL;
+	}
 
-    llist->head = head;
-    llist->count++;
+	n->data = data;
+	n->next = llist->head;
+	llist->head = n;
 
-    return data;
+	llist->count++;
+
+	return data;
 }
 
+/**
+ * Append to the end of a list
+ */
 void *llist_append(struct llist *llist, void *data)
 {
-    struct node *node = malloc(sizeof(struct node));
-    if (node == NULL)
-    {
-        return NULL;
-    }
+	struct llist_node *tail = llist->head;
 
-    node->data = data;
-    node->next = NULL;
+	// If list is empty, just insert
+	if (tail == NULL) {
+		return llist_insert(llist, data);
+	}
 
-    struct node *head = llist->head;
+	struct llist_node *n = calloc(1, sizeof *n);
 
-    while (head->next != NULL)
-    {
-        head = head->next;
-    }
+	if (n == NULL) {
+		return NULL;
+	}
 
-    head->next = node;
+	while (tail->next != NULL) {
+		tail = tail->next;
+	}
 
-    return data;
+	n->data = data;
+	tail->next = n;
+
+	llist->count++;
+
+	return data;
 }
 
+/**
+ * Return the first element in a list
+ */
 void *llist_head(struct llist *llist)
 {
-    return llist->head == NULL ? NULL : llist->head->data;
+	if (llist->head == NULL) {
+		return NULL;
+	}
+
+	return llist->head->data;
 }
 
+/**
+ * Return the last element in a list
+ */
 void *llist_tail(struct llist *llist)
 {
-    if (llist->head == NULL)
-    {
-        return NULL;
-    }
+	struct llist_node *n = llist->head;
 
-    struct node *cursor = llist->head;
+	if (n == NULL) {
+		return NULL;
+	}
 
-    while (cursor->next != NULL)
-    {
-        cursor = cursor->next;
-    }
+	while (n->next != NULL) {
+		n = n->next;
+	}
 
-    return cursor->data;
+	return n->data;
 }
 
-void *llist_find(struct llist *llist, void *data,
-        int (*cmpfn) (void *, void *))
+/**
+ * Find an element in the list
+ *
+ * cmpfn should return 0 if the comparison to this node's data is equal.
+ */
+void *llist_find(struct llist *llist, void *data, int (*cmpfn)(void *, void *))
 {
+	struct llist_node *n = llist->head;
 
-    struct node *cursor = llist->head;
+	if (n == NULL) {
+		return NULL;
+	}
 
-    while (cursor->next != NULL)
-    {
-        if (cmpfn(cursor->data, data) == 0)
-        {
-            return data;
-        }
+	while (n != NULL) {
+		if (cmpfn(data, n->data) == 0) {
+			break;
+		}
 
-        cursor = cursor->next;
-    }
+		n = n->next;
+	}
 
-    return NULL;
+	if (n == NULL) {
+		return NULL;
+	}
+
+	return n->data;
 }
 
-void *llist_delete(struct llist *llist, void *data,
-        int (*cmpfn) (void *, void *))
+/**
+ * Delete an element in the list
+ *
+ * cmpfn should return 0 if the comparison to this node's data is equal.
+ *
+ * NOTE: does *not* free the data--it merely returns a pointer to it
+ */
+void *llist_delete(struct llist *llist, void *data, int (*cmpfn)(void *, void *))
 {
+	struct llist_node *n = llist->head, *prev = NULL;
 
-    struct node *cursor = llist->head;
-    struct node *prev = NULL;
+	while (n != NULL) {
+		if (cmpfn(data, n->data) == 0) {
 
-    while (cursor != NULL)
-    {
-        if (cmpfn(cursor->data, data) == 0)
-        {
-            void *data = data;
+			void *data = n->data;
 
-            if (prev == NULL)
-            {
-                llist->head = cursor->next;
-                free(cursor);
-            }
-            else
-            {
-                prev->next = cursor->next;
-                free(cursor);
-            }
+			if (prev == NULL) {
+				// Free the head
+				llist->head = n->next;
+				free(n);
 
-            llist->count--;
-            return data;
-        }
+			} else {
+				// Free the non-head
+				prev->next = n->next;
+				free(n);
+			}
 
-        prev = cursor;
-        cursor = cursor->next;
-    }
+			llist->count--;
 
-    return NULL;
+			return data;
+		}
+
+		prev = n;
+		n = n->next;
+	}
+
+	return NULL;
 }
 
+/**
+ * Return the number of elements in the list
+ */
 int llist_count(struct llist *llist)
 {
-    return llist->count;
+	return llist->count;
 }
 
-void llist_foreach(struct llist *llist, void (*fn) (void *, void *),
-        void *arg)
+/**
+ * For each item in the list run a function
+ */
+void llist_foreach(struct llist *llist, void (*f)(void *, void *), void *arg)
 {
+	struct llist_node *p = llist->head, *next;
 
-    struct node *cursor = llist->head;
-
-    while (cursor != NULL)
-    {
-        fn(cursor->data, arg);
-        cursor = cursor->next;
-    }
+	while (p != NULL) {
+		next = p->next;
+		f(p->data, arg);
+		p = next;
+	}
 }
 
+/**
+ * Allocates and returns a new NULL-terminated array of pointers to data
+ * elements in the list.
+ *
+ * NOTE: This is a read-only array! Consider it an array view onto the linked
+ * list.
+ */
 void **llist_array_get(struct llist *llist)
 {
-    if (llist->head == NULL)
-    {
-        return NULL;
-    }
+	if (llist->head == NULL) {
+		return NULL;
+	}
 
-    void **array = malloc(sizeof *array * llist->count+1);
+	void **a = malloc(sizeof *a * llist->count + 1);
 
-    struct node *cursor = llist->head;
+	struct llist_node *n;
+	int i;
 
-    int i = 0;
-    while (cursor != NULL)
-    {
-        array[i] = cursor->data;
-        cursor = cursor->next;
-        i++;
-    }
+	for (i = 0, n = llist->head; n != NULL; i++, n = n->next) {
+		a[i] = n->data;
+	}
 
-    array[llist->count] = NULL;
+	a[i] = NULL;
 
-    return array;
+	return a;
 }
 
-void llist_array_free(void **array)
+/**
+ * Free an array allocated with llist_array_get().
+ * 
+ * NOTE: this does not modify the linked list or its data in any way.
+ */
+void llist_array_free(void **a)
 {
-    free(array);
+	free(a);
 }

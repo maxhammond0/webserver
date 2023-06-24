@@ -28,10 +28,13 @@ void free_entry(struct cache_entry *entry)
 void dllist_insert_head(struct cache *cache, struct cache_entry *ce)
 {
     // Insert at the head of the list
-    if (cache->head == NULL) {
+    if (cache->head == NULL)
+    {
         cache->head = cache->tail = ce;
         ce->prev = ce->next = NULL;
-    } else {
+    }
+    else
+    {
         cache->head->prev = ce;
         ce->next = cache->head;
         ce->prev = NULL;
@@ -118,6 +121,8 @@ void cache_put(struct cache *cache, char *path, char *content_type,
     struct cache_entry *entry = alloc_entry(path, content_type, content,
             content_length);
 
+    // Insert entry into hashtable and head of dll
+    hashtable_put(cache->index, path, entry);
     dllist_insert_head(cache, entry);
     cache->cur_size++;
 
@@ -133,7 +138,6 @@ void cache_put(struct cache *cache, char *path, char *content_type,
 struct cache_entry *cache_get(struct cache *cache, char *path)
 {
     struct cache_entry *entry = hashtable_get(cache->index, path);
-    // entry not in hashtable
     if (entry == NULL) {
         return NULL;
     }

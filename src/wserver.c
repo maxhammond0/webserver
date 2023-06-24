@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 {
     int c;
     char *root_dir = default_root;
-    int port = 10000;
+    int port = 3000;
     int threads = 1;
     int buffers = 1;
     char *schedalg = "FIFO";
